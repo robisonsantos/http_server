@@ -1,3 +1,3 @@
-- On Ubuntu/Mint:
-    - sudo apt-get install libboost-all-dev
-    - sudo apt-get install libcppnetlib-dev
+Check out specific branchs for different implementations:
+    - cpp_net_lib: uses http://cpp-netlib.org/0.9.1/hello_world_server.html to implement the server
+    - lib_micro_httpd: uses https://www.gnu.org/software/libmicrohttpd/ to implement the server

@@ -1,52 +1,29 @@
-#include <sys/types.h>
-#include <sys/select.h>
-#include <sys/socket.h>
-#include <microhttpd.h>
-#include <string.h>
-#include <stdio.h>
+#include <boost/network/protocol/http/server.hpp>
 
-#define PORT 8888
+#define PORT "8888"
 
-// https://www.gnu.org/software/libmicrohttpd/tutorial.html
-//TODO: need to port to a more C++ way of doing it :)
+namespace http = boost::network::http;
 
-int answer_to_connection (void *cls, 
-                          struct MHD_Connection *connection,
-                          const char *url,
-                          const char *method, 
-                          const char *version,
-                          const char *upload_data,
-                          size_t *upload_data_size, 
-                          void **con_cls)
-{
-  const char *page  = "<html><body>Hello, browser!</body></html>";
-  struct MHD_Response *response;
-  int ret;
+struct handler;
+typedef http::server<handler> http_server;
 
-  response = MHD_create_response_from_buffer (strlen (page),
-                                            (void*) page, MHD_RESPMEM_PERSISTENT);
-  ret = MHD_queue_response (connection, MHD_HTTP_OK, response);
-  MHD_destroy_response (response);
+struct handler {
+    void operator() (http_server::request const &request,
+                     http_server::response &response) {
+        response = http_server::response::stock_reply(
+            http_server::response::ok, "Hello, world from CPPLib!");
+    }
 
-  return ret;
+    void log(http_server::string_type const &info) {
+        std::cerr << "ERROR: " << info << '\n';
+    }
+};
+
+int main(int arg, char * argv[]) {
+    handler handler_;
+    http_server::options options(handler_);
+    http_server server_( options.address("0.0.0.0").port(PORT));
+    std::cout << "Running server at port: " << PORT << '\n';
+    server_.run();
 }
 
-int main ()
-{
-  struct MHD_Daemon *daemon;
-  printf("Starting server at port %d\n", PORT);
-
-  daemon = MHD_start_daemon (MHD_USE_SELECT_INTERNALLY, 
-                             PORT, 
-                             NULL, 
-                             NULL,
-                             &answer_to_connection, 
-                             NULL, 
-                             MHD_OPTION_END);
-
-  if (NULL == daemon) return 1;
-  getchar ();
-
-  MHD_stop_daemon (daemon);
-  return 0;
-}
